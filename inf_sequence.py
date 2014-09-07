@@ -150,6 +150,8 @@ def min_num_in_segments(segments):
     if segments[0][0] is '0':
         return [float('Inf'), 0]
     if len(segments) is 1:
+        if segments[0][0] is 'x' and segments[0][-1] is 'x':
+            return [float('Inf'), 0]
         if segments[0][0] is 'x':
             return [
                 fill_crosses(segments[0],
@@ -214,8 +216,8 @@ def split_seq(str_seq):
 
 
 str_seq = input('Введите искомую последовательность: ')
+print(first100.find(str_seq))
 #str_seq = '1111'
 result = split_seq(str_seq)
 distance = find_distance(result[0])
 print(distance+result[1])
-print(first100.find(str_seq))
