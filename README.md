@@ -1,2 +1,2 @@
-inf_sequence
+infinity sequence
 ============
