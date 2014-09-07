@@ -5,7 +5,7 @@
 from string import *
 
 first100 = ''
-for i in range(1, 100005):
+for i in range(1, 10005):
     first100 += str(i)
 print(first100)
 
@@ -100,10 +100,20 @@ def to_segment(str_seq, segment_len, shift):
 def get_rank_size(rank):
     if rank is 0:
         return 0
-    size = '8'
-    for i in range(1, rank):
+    size = ''
+    for i in range(0, rank):
         size += '9'
-    return int(size)
+    int_size = int(size)
+    for i in range(1, rank):
+        int_size -= get_rank_size(i)
+    return int_size
+
+
+def get_min_num(rank):
+    min_num = '1'
+    for i in range(1, rank):
+        min_num += '0'
+    return int(min_num)
 
 
 def find_distance(num):
@@ -111,9 +121,7 @@ def find_distance(num):
     num_len = len(str(num))
     for rank in range(1, num_len):
         summ += rank * get_rank_size(rank)
-        num -= get_rank_size(rank)
-    summ += num*num_len
-    summ -= num_len
+    summ += (num-get_min_num(num_len))*num_len
     return summ
 
 
@@ -208,9 +216,9 @@ def split_seq(str_seq):
     return nums[min(nums.keys())]
 #print(split_seq('125'))
 # #str_seq = input('Введите искомую последовательность: ')
-print(first100.find('151617'))
 k = 1
-while k < 100005:
+
+while k < 10005:
     for i in range(k-1, k+2):
         print(i, end='  →  ')
         print(find_distance(i), end='  ~  ')
