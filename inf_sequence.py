@@ -100,13 +100,10 @@ def to_segment(str_seq, segment_len, shift):
 def get_rank_size(rank):
     if rank is 0:
         return 0
-    size = ''
-    for i in range(0, rank):
-        size += '9'
-    int_size = int(size)
+    size = '9'
     for i in range(1, rank):
-        int_size -= get_rank_size(i)
-    return int_size
+        size += '0'
+    return int(size)
 
 
 def get_min_num(rank):
@@ -126,6 +123,8 @@ def find_distance(num):
 
 
 def are_equivalent(num, segment):
+    if int(num) < 0:
+        return False
     if num == segment:
         return True
     digit_list = [char for char in segment]
@@ -183,7 +182,6 @@ def min_num_in_segments(segments):
             filled = fill_crosses(segments[0], str(i))
             correct = True
             for j in range(1, len(segments)):
-                test = (str(int(filled)+j), segments[j])
                 if not are_equivalent(str(int(filled)+j), segments[j]):
                     correct = False
             if correct is True:
@@ -198,7 +196,7 @@ def min_num_in_segments(segments):
                 if not are_equivalent(str(int(filled)-j), segments[-j+1]):
                     correct = False
             if correct is True:
-                return [filled,
+                return [str(int(filled)-len(segments)+1),
                         num_of_crosses(segments[0])]
     return [float('Inf'), 0]
 
@@ -210,20 +208,14 @@ def split_seq(str_seq):
             segments = to_segment(str_seq, segment_len, shift)
             min_num = min_num_in_segments(segments)
             if min_num[0] != float('Inf'):
-                nums[int(min_num[0])] = min_num[0]
-            print(segments)
-            print(min_num_in_segments(segments))
-    return nums[min(nums.keys())]
-#print(split_seq('125'))
-# #str_seq = input('Введите искомую последовательность: ')
-k = 1
+                nums[int(min_num[0])] = min_num[1]
+    best_num = int(min(nums.keys()))
+    return [best_num, nums[best_num]]
 
-while k < 10005:
-    for i in range(k-1, k+2):
-        print(i, end='  →  ')
-        print(find_distance(i), end='  ~  ')
-        print(first100.find(str(i)+str(i+1)+str(i+2)), end='  so  ')
-        print('diff is: '+str(find_distance(i) -
-                              first100.find(str(i)+str(i+1)+str(i+2))
-                              ))
-    k *= 10
+
+str_seq = input('Введите искомую последовательность: ')
+#str_seq = '1111'
+result = split_seq(str_seq)
+distance = find_distance(result[0])
+print(distance+result[1])
+print(first100.find(str_seq))
