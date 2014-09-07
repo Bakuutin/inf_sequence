@@ -5,7 +5,7 @@
 from string import *
 
 first100 = ''
-for i in range(1, 1000):
+for i in range(1, 100005):
     first100 += str(i)
 print(first100)
 
@@ -96,19 +96,25 @@ def to_segment(str_seq, segment_len, shift):
                 ]
     return segments
 
-"""
+
+def get_rank_size(rank):
+    if rank is 0:
+        return 0
+    size = '8'
+    for i in range(1, rank):
+        size += '9'
+    return int(size)
+
+
 def find_distance(num):
-    summ = -1
+    summ = 0
     num_len = len(str(num))
-    digit_list = [int(digit) for digit in str(num)]
-    digit_list.reverse()
-    for i in range(0, num_len):
-        step = digit_list[i] * (num_len-i)
-        for j in range(0, num_len-i):
-            step *= 10
-        summ += step
-    print(summ)
-"""
+    for rank in range(1, num_len):
+        summ += rank * get_rank_size(rank)
+        num -= get_rank_size(rank)
+    summ += num*num_len
+    summ -= num_len
+    return summ
 
 
 def are_equivalent(num, segment):
@@ -200,7 +206,16 @@ def split_seq(str_seq):
             print(segments)
             print(min_num_in_segments(segments))
     return nums[min(nums.keys())]
-#print(split_seq('627'))
-find_distance(10)
-#str_seq = input('Введите искомую последовательность: ')
-print(first100.find('10'))
+#print(split_seq('125'))
+# #str_seq = input('Введите искомую последовательность: ')
+print(first100.find('151617'))
+k = 1
+while k < 100005:
+    for i in range(k-1, k+2):
+        print(i, end='  →  ')
+        print(find_distance(i), end='  ~  ')
+        print(first100.find(str(i)+str(i+1)+str(i+2)), end='  so  ')
+        print('diff is: '+str(find_distance(i) -
+                              first100.find(str(i)+str(i+1)+str(i+2))
+                              ))
+    k *= 10
