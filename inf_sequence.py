@@ -71,7 +71,7 @@ def min_num_to_fill(num_of_crosses, side):
 def max_num_to_fill(num_of_crosses):
     if num_of_crosses is 0:
         return 0
-    return int('9'*num_of_crosses)
+    return int('9'*num_of_crosses)+1
 
 
 
@@ -146,6 +146,21 @@ def are_equivalent(num, segment):
     return True
 
 
+def extra_segments(old_segments, border, shift):
+    entire_string = ''
+    i = 0
+    while old_segments[i] != border:
+        entire_string += old_segments[i]
+        i += 1
+        if i == len(old_segments):
+            return [float('Inf'), 0]
+    new_segments = to_segment(entire_string, len(border)-1, shift)
+    for k in range(i, len(old_segments)):
+        new_segments.append(old_segments[k])
+    return min_num_in_segments(new_segments)
+
+
+
 def min_num_in_segments(segments):
     if segments[0][0] is '0':
         return [float('Inf'), 0]
@@ -177,7 +192,6 @@ def min_num_in_segments(segments):
     if len(full_segments) == len(segments):
         return [segments[0],
                 num_of_crosses(segments[0])]
-
     if segments[0][0] is 'x':
         for i in range(min_num_to_fill(num_of_crosses(segments[0]), 'l'),
                        max_num_to_fill(num_of_crosses(segments[0]))):
@@ -203,6 +217,25 @@ def min_num_in_segments(segments):
     return [float('Inf'), 0]
 
 
+def min_num_in_extra_segments(segments):
+    nums = dict()
+    if len(segments[0]) > 1:
+        for shift in range(0, len(segments[0])):
+            extra = extra_segments(segments,
+                           str(min_num_to_fill(len(segments[0]), 'l')),
+                           shift)
+            if extra[0] != float('Inf'):
+                nums[int(extra[0])] = extra
+    min_num = min_num_in_segments(segments)
+    if min_num[0] != float('Inf'):
+                nums[int(min_num[0])] = min_num
+    if len(nums.keys()) > 0:
+        best_num = int(min(nums.keys()))
+        return nums[best_num]
+    else:
+        return [float('Inf'), 0]
+
+
 def split_seq(str_seq):
     nums = dict()
     for segment_len in range(1, len(str_seq)+1+num_of_zero(str_seq)):
@@ -215,9 +248,26 @@ def split_seq(str_seq):
     return [best_num, nums[best_num]]
 
 
-str_seq = input('Введите искомую последовательность: ')
+#str_seq = input('Введите искомую последовательность: ')
+
+str_seq = '001'
+# todo: fix '8910' bug
 print(first100.find(str_seq))
-#str_seq = '1111'
 result = split_seq(str_seq)
 distance = find_distance(result[0])
 print(distance+result[1])
+
+#print(extra_segments(['89', '10'], '10'))
+#print(extra_segments(['x79', '899', '100', '101', '102'], '100', 0))
+
+# Тест на глюки:
+'''
+for i in range(1, 1001):
+    print(i, end=' ')
+    str_seq = str(i)+str(i+1)+str(i+2)
+    result = split_seq(str_seq)
+    distance = find_distance(result[0])
+    if distance+result[1] != first100.find(str_seq):
+        print(str_seq)
+'''
+print('Готово')
