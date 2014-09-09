@@ -123,26 +123,11 @@ def find_distance(num):
 
 
 def are_equivalent(num, segment):
-    if int(num) < 0:
+    if len(num) != len(segment):
         return False
-    if num == segment:
-        return True
-    digit_list = [char for char in segment]
-    if len(digit_list) is 0:
-        return True
-    num_list = [char for char in num]
-    if len(num_list) < len(digit_list):
-        return False
-    if segment[-1] is 'x':
-        for i in range(0, len(digit_list)-1):
-            if num_list[i] != digit_list[i] and digit_list[i] != 'x':
-                return False
-    else:
-        num_list.reverse()
-        digit_list.reverse()
-        for i in range(0, len(digit_list)):
-            if num_list[i] != digit_list[i] and digit_list[i] != 'x':
-                return False
+    for i in range(0, len(digit_list)):
+        if num_list[i] != digit_list[i] and digit_list[i] != 'x':
+            return False
     return True
 
 
