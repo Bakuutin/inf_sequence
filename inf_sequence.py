@@ -125,8 +125,8 @@ def find_distance(num):
 def are_equivalent(num, segment):
     if len(num) != len(segment):
         return False
-    for i in range(0, len(digit_list)):
-        if num_list[i] != digit_list[i] and digit_list[i] != 'x':
+    for i in range(0, len(segment)):
+        if num[i] != segment[i] and segment[i] != 'x':
             return False
     return True
 
@@ -143,7 +143,6 @@ def extra_segments(old_segments, border, shift):
     for k in range(i, len(old_segments)):
         new_segments.append(old_segments[k])
     return min_num_in_segments(new_segments)
-
 
 
 def min_num_in_segments(segments):
