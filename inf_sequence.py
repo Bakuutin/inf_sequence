@@ -201,6 +201,18 @@ def min_num_in_segments(segments):
     return [float('Inf'), 0]
 
 
+def explore_segments(segments):
+    if len(segments) is 1 and segments[0][0] is not '0':
+        return True
+    if segments[0][0] is 'x':
+        return False
+    first_int = int(segments[0])
+    for i in range(1, len(segments)):
+        if are_equivalent(str(first_int+i), segments[i]) is False:
+            return False
+    return True
+
+
 def min_num_in_extra_segments(segments):
     nums = dict()
     if len(segments[0]) > 1:
@@ -233,7 +245,19 @@ def split_seq(str_seq):
 
 
 #str_seq = input('Введите искомую последовательность: ')
+test_segments = [
+    ['1', '2', '3'],
+    ['9', '1', '0', '0', '1'],
+    ['x9', '10', '01'],
+    ['91', '00', '1x'],
+    ['xx9', '100', '1xx'],
+    ['91001']
+]
+for segments in test_segments:
+    print(segments, end='    ')
+    print(explore_segments(segments))
 
+'''
 str_seq = '001'
 # todo: fix '8910' bug
 print(first100.find(str_seq))
@@ -245,7 +269,7 @@ print(distance+result[1])
 #print(extra_segments(['x79', '899', '100', '101', '102'], '100', 0))
 
 # Тест на глюки:
-'''
+
 for i in range(1, 1001):
     print(i, end=' ')
     str_seq = str(i)+str(i+1)+str(i+2)
