@@ -131,76 +131,6 @@ def are_equivalent(num, segment):
     return True
 
 
-def extra_segments(old_segments, border, shift):
-    entire_string = ''
-    i = 0
-    while old_segments[i] != border:
-        entire_string += old_segments[i]
-        i += 1
-        if i == len(old_segments):
-            return [float('Inf'), 0]
-    new_segments = to_segment(entire_string, len(border)-1, shift)
-    for k in range(i, len(old_segments)):
-        new_segments.append(old_segments[k])
-    return min_num_in_segments(new_segments)
-
-
-def min_num_in_segments(segments):
-    if segments[0][0] is '0':
-        return [float('Inf'), 0]
-    if len(segments) is 1:
-        if segments[0][0] is 'x' and segments[0][-1] is 'x':
-            return [float('Inf'), 0]
-        if segments[0][0] is 'x':
-            return [
-                fill_crosses(segments[0],
-                                str(min_num_to_fill(num_of_crosses(segments[0]), 'l'))),
-                num_of_crosses(segments[0])]
-        elif segments[0][-1] is 'x':
-            return [
-                fill_crosses(segments[0],
-                                str(min_num_to_fill(num_of_crosses(segments[0]), 'r'))),
-                num_of_crosses(segments[0])]
-        return [segments[0],
-                num_of_crosses(segments[0])]
-
-    full_segments = [segment for segment in segments
-                     if not 'x' in segment and len(segment) != 0]
-    for segment in full_segments:
-        if segment[0] is '0':
-            return [float('Inf'), 0]
-    if len(full_segments) > 1:
-        for i in range(0, len(full_segments)-1):
-            if int(full_segments[i])+1 != int(full_segments[i+1]):
-                return [float('Inf'), 0]
-    if len(full_segments) == len(segments):
-        return [segments[0],
-                num_of_crosses(segments[0])]
-    if segments[0][0] is 'x':
-        for i in range(min_num_to_fill(num_of_crosses(segments[0]), 'l'),
-                       max_num_to_fill(num_of_crosses(segments[0]))):
-            filled = fill_crosses(segments[0], str(i))
-            correct = True
-            for j in range(1, len(segments)):
-                if not are_equivalent(str(int(filled)+j), segments[j]):
-                    correct = False
-            if correct is True:
-                return [filled,
-                        num_of_crosses(segments[0])]
-    if segments[-1][-1] is 'x':
-        for i in range(min_num_to_fill(num_of_crosses(segments[-1]), 'r'),
-                       max_num_to_fill(num_of_crosses(segments[-1]))):
-            filled = fill_crosses(segments[-1], str(i))
-            correct = True
-            for j in range(1, len(segments)):
-                if not are_equivalent(str(int(filled)-j), segments[-j+1]):
-                    correct = False
-            if correct is True:
-                return [str(int(filled)-len(segments)+1),
-                        num_of_crosses(segments[0])]
-    return [float('Inf'), 0]
-
-
 def del_ranks_border(segments):
     try:
         max_num_index = segments.index(str(max_num_to_fill(len(segments[0]))-1))
@@ -231,24 +161,35 @@ def del_ranks_border(segments):
 
 
 def explore_segments(segments):
+    """
+    Исследует разбиение из сегмнтов на корректность.
+    Если разбиение некорректно, возвращает False,
+    иначе возвращает кортеж из полного первого сегмента
+    и длинны сдвига, на который этот сегмент отрезан
+    """
     if len(segments) is 1 and segments[0][0] is not '0':
-        return True
+        if segments[0][0] is 'x' or segments[0][-1] is 'x':
+            # Вообще-то такой сегмент корректен, но мы можем
+            # утверждать, что он не наименьший из возможных
+            return False
+        return int(segments[0]), 0
 
     del_ranks_border(segments) # Уберём границы разрядов, если они есть
-    print(segments)
 
     for segment in segments:
         if segment[0] is '0':
             return False
+
+    shift = num_of_crosses(segments[0])
 
     if segments[0][0] is 'x':
         if len(segments) is 2:
             if segments[1][-1] is not 'x':
                 # Если сегмента два, и второй это число
                 first_int = int(segments[1])-1
-                if are_equivalent(str(first_int), segments[0]) is False:
-                    return False
-                return True
+                if are_equivalent(str(first_int), segments[0]):
+                    return first_int, shift
+                return False
             else:
                 # Если сегмента два, и оба неполные. Самый сложный случай.
                 if num_of_crosses(segments[0]) <= num_of_crosses(segments[1]):
@@ -256,13 +197,13 @@ def explore_segments(segments):
                                    max_num_to_fill(num_of_crosses(segments[0]))):
                         filled = int(fill_crosses(segments[0], str(i)))
                         if are_equivalent(str(filled+1), segments[1]):
-                            return True
+                            return filled, shift
                 else:
                     for i in range(min_num_to_fill(num_of_crosses(segments[1]), 'r'),
                                    max_num_to_fill(num_of_crosses(segments[1]))):
                         filled = int(fill_crosses(segments[1], str(i)))
                         if are_equivalent(str(filled-1), segments[0]):
-                            return True
+                            return filled-1, shift
                 return False
         else:
             # Если сегментов больше двух, то сегменты в середине точно полные.
@@ -271,32 +212,13 @@ def explore_segments(segments):
             for i in range(1, len(segments)):
                 if are_equivalent(str(first_int+i), segments[i]) is False:
                     return False
-            return True
+            return first_int, shift
 
     first_int = int(segments[0])
     for i in range(1, len(segments)):
         if are_equivalent(str(first_int+i), segments[i]) is False:
             return False
-    return True
-
-
-def min_num_in_extra_segments(segments):
-    nums = dict()
-    if len(segments[0]) > 1:
-        for shift in range(0, len(segments[0])):
-            extra = extra_segments(segments,
-                           str(min_num_to_fill(len(segments[0]), 'l')),
-                           shift)
-            if extra[0] != float('Inf'):
-                nums[int(extra[0])] = extra
-    min_num = min_num_in_segments(segments)
-    if min_num[0] != float('Inf'):
-                nums[int(min_num[0])] = min_num
-    if len(nums.keys()) > 0:
-        best_num = int(min(nums.keys()))
-        return nums[best_num]
-    else:
-        return [float('Inf'), 0]
+    return first_int, shift
 
 
 def split_seq(str_seq):
@@ -304,7 +226,7 @@ def split_seq(str_seq):
     for segment_len in range(1, len(str_seq)+1+num_of_zero(str_seq)):
         for shift in range(0, segment_len):
             segments = to_segment(str_seq, segment_len, shift)
-            min_num = min_num_in_segments(segments)
+            min_num = explore_segments(segments)
             if min_num[0] != float('Inf'):
                 nums[int(min_num[0])] = min_num[1]
     best_num = int(min(nums.keys()))
@@ -313,17 +235,19 @@ def split_seq(str_seq):
 
 #str_seq = input('Введите искомую последовательность: ')
 test_segments = [
-#    ['1', '2', '3'],
-#    ['9', '1', '0', '0', '1'],
-#    ['9', '1', '0', '1', '1'],
-#    ['x9', '10', '1x'],
-#    ['x9', '30'],
-#    ['x9', '10', '1x'],
-#    ['91', '00', '1x'],
+    ['1', '2', '3'],
+    ['9', '1', '0', '0', '1'],
+    ['9', '1', '0', '1', '1'],
+    ['x9', '10', '1x'],
+    ['x9', '30'],
+    ['x9', '10', '1x'],
+    ['91', '00', '1x'],
     ['x1', '0x'],
     ['xx9', '16x'],
     ['xx9', '100', '1xx'],
-    ['91001']
+    ['9100x'],
+    ['xx001'],
+    ['91001'],
 ]
 for segments in test_segments:
     print(segments, end='    ')
