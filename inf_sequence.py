@@ -61,7 +61,7 @@ def fill_crosses(segment, num):
     return new_segment
 
 
-def min_num_to_fill(num_of_crosses, side):
+def min_num_to_fill(num_of_crosses, side='l'):
     if num_of_crosses is 0 or side is 'r':
         return 0
     else:
@@ -85,7 +85,7 @@ def is_empty(segment):
     return True
 
 
-def to_segment(str_seq, segment_len, shift):
+def to_segment(str_seq, segment_len, shift=0):
     """
     Делит строку на list из значащих сегментов
     """
@@ -201,11 +201,78 @@ def min_num_in_segments(segments):
     return [float('Inf'), 0]
 
 
+def del_ranks_border(segments):
+    try:
+        max_num_index = segments.index(str(max_num_to_fill(len(segments[0]))-1))
+        # Ищем сегмент, заполненный девятками
+        # Например, '99' или '99999
+        new_len = len(segments[0])+1
+        tail = ''
+        while len(segments) > max_num_index+1:
+            tail += segments.pop(max_num_index+1)
+        segments.extend(to_segment(tail, new_len))
+    except ValueError:
+        try:
+            min_num_index = segments.index(str(min_num_to_fill(len(segments[0]))))
+            # Ищем сегмент, младшее число в разряде
+            # Например, '10' или '10000'
+            if min_num_index != 0:
+                new_len = len(segments[0])-1
+                tail = ''
+                while len(segments) - min_num_index > 1:
+                    tail += segments.pop(0)
+                new_segments = to_segment(tail, new_len)
+                shift = num_of_crosses(new_segments[-1])
+                new_segments = to_segment(tail, new_len, shift)
+                for segment in new_segments[::-1]: # Вставляем в начало новую голову
+                    segments.insert(0, segment)
+        except ValueError:
+            ...
+
+
 def explore_segments(segments):
     if len(segments) is 1 and segments[0][0] is not '0':
         return True
+
+    del_ranks_border(segments) # Уберём границы разрядов, если они есть
+    print(segments)
+
+    for segment in segments:
+        if segment[0] is '0':
+            return False
+
     if segments[0][0] is 'x':
-        return False
+        if len(segments) is 2:
+            if segments[1][-1] is not 'x':
+                # Если сегмента два, и второй это число
+                first_int = int(segments[1])-1
+                if are_equivalent(str(first_int), segments[0]) is False:
+                    return False
+                return True
+            else:
+                # Если сегмента два, и оба неполные. Самый сложный случай.
+                if num_of_crosses(segments[0]) <= num_of_crosses(segments[1]):
+                    for i in range(min_num_to_fill(num_of_crosses(segments[0]), 'l'),
+                                   max_num_to_fill(num_of_crosses(segments[0]))):
+                        filled = int(fill_crosses(segments[0], str(i)))
+                        if are_equivalent(str(filled+1), segments[1]):
+                            return True
+                else:
+                    for i in range(min_num_to_fill(num_of_crosses(segments[1]), 'r'),
+                                   max_num_to_fill(num_of_crosses(segments[1]))):
+                        filled = int(fill_crosses(segments[1], str(i)))
+                        if are_equivalent(str(filled-1), segments[0]):
+                            return True
+                return False
+        else:
+            # Если сегментов больше двух, то сегменты в середине точно полные.
+            # Второй сегмент точно в середине. Возьмём его за точку отсчета.
+            first_int = int(segments[1])-1
+            for i in range(1, len(segments)):
+                if are_equivalent(str(first_int+i), segments[i]) is False:
+                    return False
+            return True
+
     first_int = int(segments[0])
     for i in range(1, len(segments)):
         if are_equivalent(str(first_int+i), segments[i]) is False:
@@ -246,10 +313,15 @@ def split_seq(str_seq):
 
 #str_seq = input('Введите искомую последовательность: ')
 test_segments = [
-    ['1', '2', '3'],
-    ['9', '1', '0', '0', '1'],
-    ['x9', '10', '01'],
-    ['91', '00', '1x'],
+#    ['1', '2', '3'],
+#    ['9', '1', '0', '0', '1'],
+#    ['9', '1', '0', '1', '1'],
+#    ['x9', '10', '1x'],
+#    ['x9', '30'],
+#    ['x9', '10', '1x'],
+#    ['91', '00', '1x'],
+    ['x1', '0x'],
+    ['xx9', '16x'],
     ['xx9', '100', '1xx'],
     ['91001']
 ]
