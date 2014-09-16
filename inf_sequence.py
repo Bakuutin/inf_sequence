@@ -2,7 +2,6 @@
 Находит первое вхождение введённой последовательности в последовательность,
 полученную склейкой всех натуральных чисел
 """
-from string import *
 
 first100 = ''
 for i in range(1, 10005):
@@ -140,12 +139,15 @@ def del_ranks_border(segments):
         tail = ''
         while len(segments) > max_num_index+1:
             tail += segments.pop(max_num_index+1)
-        segments.extend(to_segment(tail, new_len))
+        tail_segments = to_segment(tail, new_len)
+        del_ranks_border(tail_segments) # Рассматриваем случай, когда рассматриваемая последовательность столь длинна
+                                        # что в ней встречается сразу несколько границ порядков, например:
+        segments.extend(tail_segments)  # "89101112...9899100101102" или даже "9899100101102...99899910001001"
     except ValueError:
         try:
             min_num_index = segments.index(str(min_num_to_fill(len(segments[0]))))
-            # Ищем сегмент, младшее число в разряде
-            # Например, '10' или '10000'
+            # Ищем сегмент, младшее число в порядке
+            # Например, '10' или '10000' в зависимости от длины сегмента
             if min_num_index != 0:
                 new_len = len(segments[0])-1
                 tail = ''
@@ -154,10 +156,11 @@ def del_ranks_border(segments):
                 new_segments = to_segment(tail, new_len)
                 shift = num_of_crosses(new_segments[-1])
                 new_segments = to_segment(tail, new_len, shift)
+                del_ranks_border(tail_segments) # Как описано выше, мы проверим, вдруг есть ещё границы порядков
                 for segment in new_segments[::-1]: # Вставляем в начало новую голову
                     segments.insert(0, segment)
         except ValueError:
-            ...
+            ... # Мне нравится свобода синтаксиса в третьем питоне
 
 
 def explore_segments(segments):
@@ -174,7 +177,7 @@ def explore_segments(segments):
             return False
         return int(segments[0]), 0
 
-    del_ranks_border(segments) # Уберём границы разрядов, если они есть
+    del_ranks_border(segments) # Уберём границы порядков, если они есть
 
     for segment in segments:
         if segment[0] is '0':
@@ -234,28 +237,7 @@ def split_seq(str_seq):
             return [best_num, nums[best_num]]
     return False
 
-
 str_seq = input('Введите искомую последовательность: ')
-test_segments = [
-    ['1', '2', '3'],
-    ['9', '1', '0', '0', '1'],
-    ['9', '1', '0', '1', '1'],
-    ['x9', '10', '1x'],
-    ['x9', '30'],
-    ['x9', '10', '1x'],
-    ['91', '00', '1x'],
-    ['x1', '0x'],
-    ['xx9', '16x'],
-    ['xx9', '100', '1xx'],
-    ['9100x'],
-    ['xx001'],
-    ['91001'],
-]
-#for segments in test_segments:
-#    print(segments, end='    ')
-#    print(explore_segments(segments))
-
-
 print(first100.find(str_seq))
 result = split_seq(str_seq)
 distance = find_distance(result[0])
