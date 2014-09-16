@@ -3,11 +3,6 @@
 полученную склейкой всех натуральных чисел
 """
 
-first100 = ''
-for i in range(1, 10005):
-    first100 += str(i)
-print(first100)
-
 
 def num_of_crosses(str):
     """
@@ -238,7 +233,6 @@ def split_seq(str_seq):
     return False
 
 str_seq = input('Введите искомую последовательность: ')
-print(first100.find(str_seq))
 result = split_seq(str_seq)
 distance = find_distance(result[0])
 print(distance+result[1])
