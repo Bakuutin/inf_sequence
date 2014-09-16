@@ -227,13 +227,15 @@ def split_seq(str_seq):
         for shift in range(0, segment_len):
             segments = to_segment(str_seq, segment_len, shift)
             min_num = explore_segments(segments)
-            if min_num[0] != float('Inf'):
-                nums[int(min_num[0])] = min_num[1]
-    best_num = int(min(nums.keys()))
-    return [best_num, nums[best_num]]
+            if min_num:
+                nums[min_num[0]] = min_num[1]
+        if len(nums) > 0:
+            best_num = min(nums.keys())
+            return [best_num, nums[best_num]]
+    return False
 
 
-#str_seq = input('Введите искомую последовательность: ')
+str_seq = input('Введите искомую последовательность: ')
 test_segments = [
     ['1', '2', '3'],
     ['9', '1', '0', '0', '1'],
@@ -249,29 +251,12 @@ test_segments = [
     ['xx001'],
     ['91001'],
 ]
-for segments in test_segments:
-    print(segments, end='    ')
-    print(explore_segments(segments))
+#for segments in test_segments:
+#    print(segments, end='    ')
+#    print(explore_segments(segments))
 
-'''
-str_seq = '001'
-# todo: fix '8910' bug
+
 print(first100.find(str_seq))
 result = split_seq(str_seq)
 distance = find_distance(result[0])
 print(distance+result[1])
-
-#print(extra_segments(['89', '10'], '10'))
-#print(extra_segments(['x79', '899', '100', '101', '102'], '100', 0))
-
-# Тест на глюки:
-
-for i in range(1, 1001):
-    print(i, end=' ')
-    str_seq = str(i)+str(i+1)+str(i+2)
-    result = split_seq(str_seq)
-    distance = find_distance(result[0])
-    if distance+result[1] != first100.find(str_seq):
-        print(str_seq)
-'''
-print('Готово')
