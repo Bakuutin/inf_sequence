@@ -130,14 +130,15 @@ def del_ranks_border(segments):
         max_num_index = segments.index(str(max_num_to_fill(len(segments[0]))-1))
         # Ищем сегмент, заполненный девятками
         # Например, '99' или '99999
-        new_len = len(segments[0])+1
-        tail = ''
-        while len(segments) > max_num_index+1:
-            tail += segments.pop(max_num_index+1)
-        tail_segments = to_segment(tail, new_len)
-        del_ranks_border(tail_segments) # Рассматриваем случай, когда рассматриваемая последовательность столь длинна
-                                        # что в ней встречается сразу несколько границ порядков, например:
-        segments.extend(tail_segments)  # "89101112...9899100101102" или даже "9899100101102...99899910001001"
+        if max_num_index != len(segments)-1:
+            new_len = len(segments[0])+1
+            tail = ''
+            while len(segments) > max_num_index+1:
+                tail += segments.pop(max_num_index+1)
+            tail_segments = to_segment(tail, new_len)
+            del_ranks_border(tail_segments) # Рассматриваем случай, когда рассматриваемая последовательность столь длинная,
+                                            # что в ней встречается сразу несколько границ порядков, например:
+            segments.extend(tail_segments)  # "89101112...9899100101102" или даже "9899100101102...99899910001001"
     except ValueError:
         try:
             min_num_index = segments.index(str(min_num_to_fill(len(segments[0]))))
@@ -232,7 +233,13 @@ def split_seq(str_seq):
             return [best_num, nums[best_num]]
     return False
 
+
+def show_answer(str_seq):
+    result = split_seq(str_seq)
+    distance = find_distance(result[0])
+    print('Ответ: ', end='')
+    print(distance+result[1]+1)
+
+
 str_seq = input('Введите искомую последовательность: ')
-result = split_seq(str_seq)
-distance = find_distance(result[0])
-print(distance+result[1])
+show_answer(str_seq)
