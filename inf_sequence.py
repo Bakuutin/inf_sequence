@@ -152,7 +152,7 @@ def del_ranks_border(segments):
                 new_segments = to_segment(tail, new_len)
                 shift = num_of_crosses(new_segments[-1])
                 new_segments = to_segment(tail, new_len, shift)
-                del_ranks_border(tail_segments) # Как описано выше, мы проверим, вдруг есть ещё границы порядков
+                del_ranks_border(new_segments) # Как описано выше, мы проверим, вдруг есть ещё границы порядков
                 for segment in new_segments[::-1]: # Вставляем в начало новую голову
                     segments.insert(0, segment)
         except ValueError:
