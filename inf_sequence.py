@@ -146,14 +146,20 @@ def del_ranks_border(segments):
             # Например, '10' или '10000' в зависимости от длины сегмента
             if min_num_index != 0:
                 new_len = len(segments[0])-1
-                tail = ''
+                if new_len is 0:
+                    return
+                head = ''
+                if len(segments) is 2 and min_num_index is 1:
+                    head += segments.pop(0)
                 while len(segments) - min_num_index > 1:
-                    tail += segments.pop(0)
-                new_segments = to_segment(tail, new_len)
-                shift = num_of_crosses(new_segments[-1])
-                new_segments = to_segment(tail, new_len, shift)
-                del_ranks_border(new_segments) # Как описано выше, мы проверим, вдруг есть ещё границы порядков
-                for segment in new_segments[::-1]: # Вставляем в начало новую голову
+                    head += segments.pop(0)
+                if len(head) is 0:
+                    return
+                head_segments = to_segment(head, new_len)
+                shift = num_of_crosses(head_segments[-1])
+                head_segments = to_segment(head, new_len, shift)
+                del_ranks_border(head_segments) # Как описано выше, мы проверим, вдруг есть ещё границы порядков
+                for segment in head_segments[::-1]: # Вставляем в начало новую голову
                     segments.insert(0, segment)
         except ValueError:
             ... # Мне нравится свобода синтаксиса в третьем питоне
@@ -169,12 +175,14 @@ def explore_segments(segments):
     if len(segments) is 1 and segments[0][0] is not '0':
         if segments[0][0] is 'x' or segments[0][-1] is 'x':
             # Вообще-то такой сегмент корректен, но мы можем
-            # утверждать, что он не наименьший из возможных
+            # утверждать, что он не наименьший из возможных,
+            # кроме случая 'x0'
+            if segments[0] == 'x0':
+                return 10, 1
             return False
         return int(segments[0]), 0
 
     del_ranks_border(segments) # Уберём границы порядков, если они есть
-
     for segment in segments:
         if segment[0] is '0':
             return False
@@ -208,7 +216,7 @@ def explore_segments(segments):
             # Если сегментов больше двух, то сегменты в середине точно полные.
             # Второй сегмент точно в середине. Возьмём его за точку отсчета.
             first_int = int(segments[1])-1
-            for i in range(1, len(segments)):
+            for i in range(0, len(segments)):
                 if are_equivalent(str(first_int+i), segments[i]) is False:
                     return False
             return first_int, shift
@@ -225,21 +233,56 @@ def split_seq(str_seq):
     for segment_len in range(1, len(str_seq)+1+num_of_zero(str_seq)):
         for shift in range(0, segment_len):
             segments = to_segment(str_seq, segment_len, shift)
+            #print(segments)
             min_num = explore_segments(segments)
             if min_num:
-                nums[min_num[0]] = min_num[1]
+                if min_num[0] in nums.keys():
+                    if min_num[1] < nums[min_num[0]]:
+                        nums[min_num[0]] = min_num[1]
+                else:
+                    nums[min_num[0]] = min_num[1]
         if len(nums) > 0:
             best_num = min(nums.keys())
-            return [best_num, nums[best_num]]
+            return best_num, nums[best_num]
     return False
 
 
 def show_answer(str_seq):
+    first1005 = ''
+    for i in range(1, 1005):
+        first1005 += str(i)
+
     result = split_seq(str_seq)
     distance = find_distance(result[0])
     print('Ответ: ', end='')
     print(distance+result[1]+1)
+    print(first1005.find(str_seq)+1)
+    print(result)
+
+def test():
+    first1005 = ''
+    for i in range(1, 100005):
+        first1005 += str(i)
+    print(first1005[:100])
+    for i in range(0, 100001):
+        str_seq = str(i)
+        result = split_seq(str_seq)
+        distance = find_distance(result[0])
+        if first1005.find(str_seq) != distance+result[1]:
+            print()
+            print(str_seq, end='  Error!!!\n')
+            print(first1005.find(str_seq), end='  ~  ')
+            print(distance+result[1])
+        else:
+            print(end='.')
+    print('\nDone!')
 
 
-str_seq = input('Введите искомую последовательность: ')
-show_answer(str_seq)
+#str_seq = input('Введите искомую последовательность: ')
+str_seq = input()
+if str_seq == 't':
+    test()
+else:
+    show_answer(str_seq)
+
+#print(explore_segments(['xx9', '100']))
