@@ -256,15 +256,16 @@ def show_answer(str_seq):
     distance = find_distance(result[0])
     print('Ответ: ', end='')
     print(distance+result[1]+1)
-    print(first1005.find(str_seq)+1)
-    print(result)
 
 def test():
+    import pickle
+    goal = 1000
     first1005 = ''
     for i in range(1, 100005):
         first1005 += str(i)
     print(first1005[:100])
-    for i in range(0, 100001):
+    data = []
+    for i in range(0, goal):
         str_seq = str(i)
         result = split_seq(str_seq)
         distance = find_distance(result[0])
@@ -274,14 +275,30 @@ def test():
             print(first1005.find(str_seq), end='  ~  ')
             print(distance+result[1])
         else:
-            print(end='.')
+            data.append(distance+result[1]+1)
+            print(i, end=' ')
+    with open('data.pickle', 'wb') as f:
+        pickle.dump(data, f)
     print('\nDone!')
+    print(data)
 
 
-#str_seq = input('Введите искомую последовательность: ')
-str_seq = input()
+def draw_plot():
+    import pickle
+    import numpy as np
+    import matplotlib.pyplot as plt
+    with open('data.pickle', 'rb') as f:
+        data = pickle.load(f)
+    #print(data)
+    hist = plt.plot(data)
+    plt.show()
+
+str_seq = input('Введите искомую последовательность: ')
+#str_seq = input()
 if str_seq == 't':
     test()
+elif str_seq == 's':
+    draw_plot()
 else:
     show_answer(str_seq)
 
