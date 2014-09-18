@@ -307,7 +307,8 @@ def show_answer(str_seq):
     """
     result = split_seq(str_seq)
     distance = find_distance(result[0])
-    print('Ответ: {}'.format(distance+result[1]+1))
+    answer = distance+result[1]+1
+    print('Ответ: {}'.format(answer))
 
 
 str_seq = input('Введите искомую последовательность: ')
