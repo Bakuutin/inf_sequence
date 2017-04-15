@@ -1,11 +1,13 @@
 #!/usr/bin/env python3.6
 
 import sys
-
+import logging
 from utils import distanse_to_int
 
+
+MAX_NUMBER_WIDTH = 10
 PAD = 'x'
-MAX_WIDTH = 10
+logger = logging.getLogger('sequence')
 
 
 class InvalidSequence(Exception):
@@ -46,7 +48,10 @@ def check_unpadded_initial_number(mask, sequence):
     if are_mathed(str(expected_next), sequence):
         return current
     else:
-        raise InvalidSequence(f'{sequence[:len(mask)]} != {expected_next}')
+        raise InvalidSequence(
+            f'{sequence[:len(mask)]}{PAD * (len(mask) - len(sequence))}'
+            f' != {expected_next}'
+        )
 
 
 def check_padded_initial_number(shift, mask, sequence):
@@ -56,7 +61,9 @@ def check_padded_initial_number(shift, mask, sequence):
 
     elif mask[-1] != '9':
         raise InvalidSequence(
-            f'{sequence[:len(mask) + shift]} != {expected_next}'
+            f'{sequence[:len(mask) + shift]}'
+            f'{PAD * (len(mask) + shift - len(sequence))}'
+            f' != {expected_next}'
         )
 
     possible_shift = int(sequence[:shift]) - 1
@@ -64,7 +71,9 @@ def check_padded_initial_number(shift, mask, sequence):
     if are_mathed(str(possible_current + 1), sequence):
         return possible_current
     raise InvalidSequence(
-        f'{sequence[:len(mask) + shift]} != {possible_current + 1}'
+        f'{sequence[:len(mask) + shift]}'
+        f'{PAD * (len(mask) + shift - len(sequence))}'
+        f' != {possible_current + 1}'
     )
 
 
@@ -89,6 +98,7 @@ def get_split(width, shift, sequence):
         if not are_mathed(str_next, sequence):
             raise InvalidSequence(
                 f'{str_next} != {sequence[:step]}'
+                f'{PAD * (step - len(sequence))}'
             )
         number += 1
         split.size += 1
@@ -119,7 +129,7 @@ class Split:
 
 
 def get_best_splits(sequence):
-    for width in range(1, min(len(sequence) + 2, MAX_WIDTH)):
+    for width in range(1, min(len(sequence) + 2, MAX_NUMBER_WIDTH)):
         splits = []
         for shift in range(width):
             if not shift and sequence.startswith('0'):
@@ -127,9 +137,10 @@ def get_best_splits(sequence):
             try:
                 splits.append(get_split(width, shift, sequence))
             except InvalidSequence as e:
-                ending = list(split_to_blocks(
-                    pad(shift, sequence, width), width))
-                print('Invalid', ending, e)
+                invalid_split = list(
+                    split_to_blocks(pad(shift, sequence, width), width)
+                )
+                logger.info(f'Invalid split: {invalid_split} {e}')
         if splits:
             return splits
 
@@ -141,12 +152,14 @@ def get_best_split(sequence):
 
 def get_answer(sequence):
     best_split = get_best_split(sequence)
-    print(repr(best_split))
+    logger.info(f'Best split: {best_split}')
     return best_split.distanse
 
 
 def main():
-    if len(sys.argv) != 2:
+    logging.basicConfig(level=logging.INFO)
+
+    if len(sys.argv) < 2:
         sequence = input('Enter a sequence: ')
     else:
         sequence = sys.argv[1]
