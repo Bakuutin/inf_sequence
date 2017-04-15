@@ -109,11 +109,14 @@ class Split:
         return distanse_to_int(self.start) + self.shift
 
 def numbers_of_len(n):
-    return 9 * (10 ** n) - 1
+    return 9 * (10 ** (n-1))
 
 def distanse_to_int(i):
-    huge_string = ''.join(map(str, range(1, i)))
-    return len(huge_string)
+    l = len(str(i))
+    # import ipdb; ipdb.set_trace()
+    distanse = sum(n * numbers_of_len(n) for n in range(1, l))
+    distanse += l * (i - 10 ** (l-1))
+    return distanse
 
 
 def get_best_splits(sequence):
@@ -149,4 +152,5 @@ if __name__ == '__main__':
         print(f'"{sequence}" is not decimal!', file=sys.stderr)
         sys.exit(1)
 
-    pprint(get_answer(sequence))
+    print(distanse_to_int(int(sequence)))
+    # pprint(get_answer(sequence))
