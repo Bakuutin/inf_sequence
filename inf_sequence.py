@@ -6,6 +6,7 @@ from collections import namedtuple
 from pprint import pprint
 
 PAD = 'x'
+MAX_WIDTH = 10
 
 class InvalidSequence(Exception):
     pass
@@ -116,7 +117,7 @@ def distanse_to_int(i):
 
 
 def get_best_splits(sequence):
-    for width in range(1, len(sequence) + 2):
+    for width in range(1, min(len(sequence) + 2, MAX_WIDTH)):
         splits = []
         for shift in range(width):
             if not shift and sequence.startswith('0'):
