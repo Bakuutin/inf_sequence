@@ -3,15 +3,15 @@ from inf_sequence import get_answer
 
 
 test_sequences = [
-    '21324',
     '24324',
-    '0244',
     '01',
-] + [str(i) for i in range(50)]
+    ''.join(map(str, range(7, 103))),  # 7891011...9899100101102
+] + [
+    str(i) for i in range(1500)
+]
 
-long_test_string = ''.join(map(str, range(1, 100000)))
+long_test_string = ''.join(map(str, range(1, 1000)))
 
 @pytest.mark.parametrize("sequence", test_sequences)
 def test_sequence_finder(sequence):
-    print(sequence, long_test_string.find(sequence) - get_answer(sequence))
-    # assert long_test_string.find(sequence) == get_answer(sequence)
+    assert get_answer(sequence) == long_test_string.find(sequence)

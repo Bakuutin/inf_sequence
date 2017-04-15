@@ -43,16 +43,25 @@ def check_unpadded_initial_number(mask, sequence):
     if are_mathed(str(expected_next), sequence):
         return current
     else:
-        raise InvalidSequence(f'Invalid next {expected_next} != {sequence[:len(mask)]}')
+        raise InvalidSequence(f'Invalid next {sequence[:len(mask)]} != {expected_next}')
 
 def check_padded_initial_number(shift, mask, sequence):
     expected_next = int(sequence[:shift] + mask) + 1
-    if not are_mathed(str(expected_next), sequence):
-        raise InvalidSequence(f'Invalid next {expected_next} != {sequence[:len(mask)]}')
-    return expected_next - 1
+    if are_mathed(str(expected_next), sequence):
+        return expected_next - 1
+
+    elif mask[-1] != '9':
+        raise InvalidSequence(f'Invalid next {sequence[:len(mask) + shift]} != {expected_next}')
+
+    possible_shift = int(sequence[:shift]) - 1
+    possible_current = int(f'{possible_shift}{mask}')
+    if are_mathed(str(possible_current + 1), sequence):
+        return possible_current
+    raise InvalidSequence(f'Invalid next {sequence[:len(mask) + shift]} != {possible_current + 1}')
+
 
 def fill_mask(shift, mask):
-    return 10 ** shift + int(mask)
+    return 10 ** shift + int(mask) if shift else int(mask)
 
 
 def get_split(width, shift, sequence):
@@ -62,14 +71,14 @@ def get_split(width, shift, sequence):
     if not sequence:
         return Split(fill_mask(shift, mask), shift=shift)
 
-    # import ipdb; ipdb.set_trace()
     number = get_initial_number(mask, sequence, shift)
+
     split = Split(number, shift=shift)
 
     while sequence:
         str_number = str(number)
         str_next = str(number + 1)
-        step = len(str_number) # TODO: ceil&log10
+        step = len(str_next) # TODO: ceil&log10
         if not are_mathed(str_next, sequence):
             raise InvalidSequence(f'Invalid next {str_next} != {sequence[:step]}')
         number += 1
@@ -96,8 +105,7 @@ class Split:
 
     @property
     def distanse(self):
-        print(repr(self))
-        return distanse_to_int(self.start) - self.shift
+        return distanse_to_int(self.start) + self.shift
 
 def numbers_of_len(n):
     return 9 * (10 ** n) - 1
@@ -117,7 +125,7 @@ def get_best_splits(sequence):
                 splits.append(get_split(width, shift, sequence))
             except InvalidSequence as e:
                 ending = list(split_to_blocks(pad(shift, sequence, width), width))
-                # print('not ok:', ending, e)
+                print('Invalid', ending, e)
         if splits:
             return splits
 
@@ -126,11 +134,13 @@ def get_best_split(sequence):
     return min(splits, key=lambda s: s.start)
 
 def get_answer(sequence):
-    return get_best_split(sequence).distanse
+    best_split = get_best_split(sequence)
+    print(repr(best_split))
+    return best_split.distanse
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        sequence = input('Enter the sequence: ')
+        sequence = input('Enter a sequence: ')
     else:
         sequence = sys.argv[1]
 
