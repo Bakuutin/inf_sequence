@@ -13,9 +13,11 @@ test_sequences = [
 
 long_test_string = ''.join(map(str, range(1, 1500)))
 
+
 @pytest.mark.parametrize("sequence", test_sequences)
 def test_sequence_finder(sequence):
     assert get_answer(sequence) == long_test_string.find(sequence)
+
 
 @pytest.mark.parametrize("number", range(1, 150))
 def test_distanse_finder(number):

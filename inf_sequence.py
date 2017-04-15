@@ -1,28 +1,28 @@
 #!/usr/bin/env python3.6
 
 import sys
-from math import ceil
-from collections import namedtuple
 
 from utils import distanse_to_int
 
 PAD = 'x'
 MAX_WIDTH = 10
 
+
 class InvalidSequence(Exception):
     pass
 
-Occurence = namedtuple('Occurence', ['first_number', 'shift'])
 
 def split_to_blocks(sequence, width):
     for i in range(0, len(sequence), width):
-        yield sequence[i:i+width]
+        yield sequence[i:i + width]
+
 
 def pad(shift, sequence, width):
     right_pad_len = width - ((shift + len(sequence)) % width)
     if right_pad_len == width:
         right_pad_len = 0
     return f'{PAD * shift}{sequence}{PAD * right_pad_len}'
+
 
 def get_initial_number(mask, sequence, shift=0):
     assert mask and sequence
@@ -32,12 +32,13 @@ def get_initial_number(mask, sequence, shift=0):
 
     if shift:
         return check_padded_initial_number(shift, mask, sequence)
-    else:
-        return check_unpadded_initial_number(mask, sequence)
+    return check_unpadded_initial_number(mask, sequence)
+
 
 def are_mathed(a, b):
     common = min(len(a), len(b))
     return a[:common] == b[:common]
+
 
 def check_unpadded_initial_number(mask, sequence):
     current = int(mask)
@@ -45,7 +46,8 @@ def check_unpadded_initial_number(mask, sequence):
     if are_mathed(str(expected_next), sequence):
         return current
     else:
-        raise InvalidSequence(f'Invalid next {sequence[:len(mask)]} != {expected_next}')
+        raise InvalidSequence(f'{sequence[:len(mask)]} != {expected_next}')
+
 
 def check_padded_initial_number(shift, mask, sequence):
     expected_next = int(sequence[:shift] + mask) + 1
@@ -53,13 +55,17 @@ def check_padded_initial_number(shift, mask, sequence):
         return expected_next - 1
 
     elif mask[-1] != '9':
-        raise InvalidSequence(f'Invalid next {sequence[:len(mask) + shift]} != {expected_next}')
+        raise InvalidSequence(
+            f'{sequence[:len(mask) + shift]} != {expected_next}'
+        )
 
     possible_shift = int(sequence[:shift]) - 1
     possible_current = int(f'{possible_shift}{mask}')
     if are_mathed(str(possible_current + 1), sequence):
         return possible_current
-    raise InvalidSequence(f'Invalid next {sequence[:len(mask) + shift]} != {possible_current + 1}')
+    raise InvalidSequence(
+        f'{sequence[:len(mask) + shift]} != {possible_current + 1}'
+    )
 
 
 def fill_mask(shift, mask):
@@ -78,16 +84,18 @@ def get_split(width, shift, sequence):
     split = Split(number, shift=shift)
 
     while sequence:
-        str_number = str(number)
         str_next = str(number + 1)
-        step = len(str_next) # TODO: ceil&log10
+        step = len(str_next)  # TODO: ceil&log10
         if not are_mathed(str_next, sequence):
-            raise InvalidSequence(f'Invalid next {str_next} != {sequence[:step]}')
+            raise InvalidSequence(
+                f'{str_next} != {sequence[:step]}'
+            )
         number += 1
         split.size += 1
         sequence = sequence[step:]
 
     return split
+
 
 class Split:
     def __init__(self, start, size=1, shift=0):
@@ -119,21 +127,25 @@ def get_best_splits(sequence):
             try:
                 splits.append(get_split(width, shift, sequence))
             except InvalidSequence as e:
-                ending = list(split_to_blocks(pad(shift, sequence, width), width))
+                ending = list(split_to_blocks(
+                    pad(shift, sequence, width), width))
                 print('Invalid', ending, e)
         if splits:
             return splits
 
+
 def get_best_split(sequence):
     splits = get_best_splits(sequence)
     return min(splits, key=lambda s: s.start)
+
 
 def get_answer(sequence):
     best_split = get_best_split(sequence)
     print(repr(best_split))
     return best_split.distanse
 
-if __name__ == '__main__':
+
+def main():
     if len(sys.argv) != 2:
         sequence = input('Enter a sequence: ')
     else:
@@ -143,4 +155,8 @@ if __name__ == '__main__':
         print(f'"{sequence}" is not decimal!', file=sys.stderr)
         sys.exit(1)
 
-    pprint(get_answer(sequence))
+    print(get_answer(sequence))
+
+
+if __name__ == '__main__':
+    main()
