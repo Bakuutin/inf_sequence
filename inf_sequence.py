@@ -3,7 +3,8 @@
 import sys
 from math import ceil
 from collections import namedtuple
-from pprint import pprint
+
+from utils import distanse_to_int
 
 PAD = 'x'
 MAX_WIDTH = 10
@@ -108,16 +109,6 @@ class Split:
     def distanse(self):
         return distanse_to_int(self.start) + self.shift
 
-def numbers_of_len(n):
-    return 9 * (10 ** (n-1))
-
-def distanse_to_int(i):
-    l = len(str(i))
-    # import ipdb; ipdb.set_trace()
-    distanse = sum(n * numbers_of_len(n) for n in range(1, l))
-    distanse += l * (i - 10 ** (l-1))
-    return distanse
-
 
 def get_best_splits(sequence):
     for width in range(1, min(len(sequence) + 2, MAX_WIDTH)):
@@ -152,5 +143,4 @@ if __name__ == '__main__':
         print(f'"{sequence}" is not decimal!', file=sys.stderr)
         sys.exit(1)
 
-    print(distanse_to_int(int(sequence)))
-    # pprint(get_answer(sequence))
+    pprint(get_answer(sequence))

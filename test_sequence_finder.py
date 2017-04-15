@@ -1,5 +1,6 @@
 import pytest
-from inf_sequence import get_answer, distanse_to_int
+from inf_sequence import get_answer
+from utils import distanse_to_int
 
 
 test_sequences = [
