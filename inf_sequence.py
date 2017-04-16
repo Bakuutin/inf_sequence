@@ -1,315 +1,189 @@
-"""
-Находит первое вхождение введённой последовательности в последовательность,
-полученную склейкой всех натуральных чисел
-"""
+#!/usr/bin/env python3.6
+
+import sys
+import logging
+from utils import distanse_to_int
 
 
-def num_of_crosses(str):
-    """
-    Возвращает количество 'x' в начале или конце строки
-    """
-    num = 0
-    for char in str:
-        if char == 'x':
-            num += 1
-        else:
-            break
-    for char in str[::-1]:
-        if char == 'x':
-            num += 1
-        else:
-            break
-    return num
+MAX_NUMBER_WIDTH = 10
+PAD = '#'
+logger = logging.getLogger('sequence')
 
 
-def num_of_zero(str):
-    """
-    Возвращает количество нулей в начале строки
-    """
-    num = 0
-    for char in str:
-        if char == '0':
-            num += 1
-        else:
-            break
-    return num
+class InvalidSequence(Exception):
+    pass
 
 
-def fill_crosses(segment, num):
-    """
-    Заполняет строку-шаблон, заменяя
-    последовательность из 'x' на число num
-    """
-    crosses = num_of_crosses(segment)
-    full_num = num.zfill(crosses)
-    split_chars = [char for char in segment]
-    split_num = [char for char in full_num]
-    if segment[0] is 'x':
-        for i in range(0, crosses):
-            split_chars[i] = split_num[i]
+def split_to_blocks(sequence, width):
+    for i in range(0, len(sequence), width):
+        yield sequence[i:i + width]
+
+
+def pad(shift, sequence, width):
+    right_pad_len = width - ((shift + len(sequence)) % width)
+    if right_pad_len == width:
+        right_pad_len = 0
+    return f'{PAD * shift}{sequence}{PAD * right_pad_len}'
+
+
+def get_initial_number(mask, sequence, shift=0):
+    assert mask and sequence
+
+    if sequence.startswith('0') or not shift and mask.startswith('0'):
+        raise InvalidSequence('Leading zero')
+
+    if shift:
+        return check_padded_initial_number(shift, mask, sequence)
+    return check_unpadded_initial_number(mask, sequence)
+
+
+def are_mathed(a, b):
+    common = min(len(a), len(b))
+    return a[:common] == b[:common]
+
+
+def check_unpadded_initial_number(mask, sequence):
+    current = int(mask)
+    expected_next = current + 1
+    if are_mathed(str(expected_next), sequence):
+        return current
     else:
-        split_chars.reverse()
-        split_num.reverse()
-        for i in range(0, crosses):
-            split_chars[i] = split_num[i]
-        split_chars.reverse()
-    new_segment = ''
-    for element in split_chars:
-        new_segment += element
-    return new_segment
+        raise InvalidSequence(
+            f'{sequence[:len(mask)]}{PAD * (len(mask) - len(sequence))}'
+            f' != {expected_next}'
+        )
 
 
-def min_num_to_fill(len_of_x, side='l'):
-    """
-    Возвращает минимальное число, которым
-    можно заполнить последовательность 'x'
-    в сегменте. side показывает сторону,
-    где в сегменте стоят 'x'
-    """
-    if len_of_x is 0 or side is 'r':
-        return 0
+def check_padded_initial_number(shift, mask, sequence):
+    expected_next = int(sequence[:shift] + mask) + 1
+    if are_mathed(str(expected_next), sequence):
+        return expected_next - 1
+
+    elif mask[-1] != '9':
+        raise InvalidSequence(
+            f'{sequence[:len(mask) + shift]}'
+            f'{PAD * (len(mask) + shift - len(sequence))}'
+            f' != {expected_next}'
+        )
+
+    possible_shift = int(sequence[:shift]) - 1
+    possible_current = int(f'{possible_shift}{mask}')
+    if are_mathed(str(possible_current + 1), sequence):
+        return possible_current
+    raise InvalidSequence(
+        f'{sequence[:len(mask) + shift]}'
+        f'{PAD * (len(mask) + shift - len(sequence))}'
+        f' != {possible_current + 1}'
+    )
+
+
+def fill_mask(shift, mask):
+    return 10 ** shift + int(mask) if shift else int(mask)
+
+
+def get_split(width, shift, sequence):
+    mask = sequence[:width - shift]
+    sequence = sequence[width - shift:]
+
+    if not sequence:
+        return Split(fill_mask(shift, mask), shift=shift)
+
+    number = get_initial_number(mask, sequence, shift)
+
+    split = Split(number, shift=shift)
+
+    while sequence:
+        str_next = str(number + 1)
+        step = len(str_next)  # TODO: ceil&log10
+        if not are_mathed(str_next, sequence):
+            raise InvalidSequence(
+                f'{str_next} != {sequence[:step]}'
+                f'{PAD * (step - len(sequence))}'
+            )
+        number += 1
+        split.size += 1
+        sequence = sequence[step:]
+
+    return split
+
+
+class Split:
+    def __init__(self, start, size=1, shift=0):
+        self.size = size
+        self.start = start
+        self.shift = shift
+
+    def __str__(self):
+        return str(list(range(self.start, self.end)))
+
+    def __repr__(self):
+        return f'<Split shift="{self.shift}" {self}>'
+
+    @property
+    def end(self):
+        return self.size + self.start
+
+    def __len__(self):
+        return distanse_to_int(self.end) - distanse_to_int(self.start)
+
+    @property
+    def distanse(self):
+        return distanse_to_int(self.start) + self.shift
+
+
+def get_best_splits(sequence):
+    for width in range(1, min(len(sequence) + 2, MAX_NUMBER_WIDTH)):
+        splits = []
+        for shift in range(width):
+            if not shift and sequence.startswith('0'):
+                continue
+            try:
+                splits.append(get_split(width, shift, sequence))
+            except InvalidSequence as e:
+                invalid_split = list(
+                    split_to_blocks(pad(shift, sequence, width), width)
+                )
+                logger.info(f'Invalid split: {invalid_split} {e}')
+        if splits:
+            return splits
+
+
+def get_best_split(sequence):
+    splits = get_best_splits(sequence)
+    return min(splits, key=lambda s: s.start)
+
+
+def main():
+    logging.basicConfig(level=logging.INFO)
+
+    if len(sys.argv) < 2:
+        sequence = input('Enter a sequence: ')
     else:
-        return int('1'+'0'*(len_of_x-1))
+        sequence = sys.argv[1]
+
+    if not sequence.isdecimal():
+        print(f'"{sequence}" is not decimal!', file=sys.stderr)
+        sys.exit(1)
+
+    from colored import fg, attr
+    split = get_best_split(sequence)
+    painted = fg("yellow")
+    reset = attr('reset')
+    string_split = " ".join(map(str, range(split.start, split.end)))
+    right_shift = (
+        (len(split) - split.shift - len(sequence)) or -len(string_split)
+    )
+    before = f'{split.start - 1} ' if split.start != 1 else ''
+    after = split.end
+    colored_string_split = (
+        f'{before}'
+        f'{string_split[:split.shift]}{painted}'
+        f'{string_split[split.shift:-right_shift]}{reset}'
+        f'{string_split[-right_shift:]} '
+        f'{after}'
+    )
+    print(colored_string_split)
 
 
-def max_num_to_fill(len_of_x):
-    """
-    Возвращает минимальное число, которым
-    можно заполнить последовательность 'x'
-    в сегменте.
-    """
-    if len_of_x is 0:
-        return 0
-    return int('9'*len_of_x)+1
-
-
-
-def is_empty(segment):
-    """
-    Проверяет, есть ли в сегменте цифры
-    """
-    for char in segment:
-        if char != 'x':
-            return False
-    return True
-
-
-def to_segment(str_seq, segment_len, shift=0):
-    """
-    Делит строку на list из сегментов
-    """
-    ext_str_seq = segment_len*'x'+str_seq+segment_len*'x'
-    segments = [ext_str_seq[num+shift:num+segment_len+shift]
-                for num in range(0, len(ext_str_seq), segment_len)
-                if not is_empty(ext_str_seq[num+shift:num+segment_len+shift])
-                ]
-    return segments
-
-
-def get_rank_size(rank):
-    """
-    Возвращает количество натуральных чисел,
-    имеющих длину rank.
-    """
-    if rank is 0:
-        return 0
-    size = '9'
-    for i in range(1, rank):
-        size += '0'
-    return int(size)
-
-
-def get_min_num(rank):
-    """
-    Возвращает минимальное число длиной rank цифр
-    """
-    min_num = '1'
-    for i in range(1, rank):
-        min_num += '0'
-    return int(min_num)
-
-
-def find_distance(num):
-    """
-    Находит расстояние до числа num
-    в бесконечной последовательности
-    """
-    summ = 0
-    num_len = len(str(num))
-    for rank in range(1, num_len):
-        summ += rank * get_rank_size(rank)
-    summ += (num-get_min_num(num_len))*num_len
-    return summ
-
-
-def are_equivalent(num, segment):
-    """
-    Проверяет соответствие числа шаблону-сегменту.
-    Например: '100' ~ '1xx'
-    """
-    if len(num) != len(segment):
-        return False
-    for i in range(0, len(segment)):
-        if num[i] != segment[i] and segment[i] != 'x':
-            return False
-    return True
-
-
-def del_ranks_border(segments):
-    """
-    Рекурсивно находит в разбиении границы порядков и
-    восстанавливает правильную длину чисел. Например:
-    ['98', '99', '10', '01'] → ['98', '99', '100', '1xx']
-    """
-    try:
-        max_num_index = segments.index(str(max_num_to_fill(len(segments[0]))-1))
-        # Ищем сегмент, заполненный девятками
-        # Например, '99' или '99999
-        if max_num_index != len(segments)-1:
-            new_len = len(segments[0])+1
-            tail = ''
-            while len(segments) > max_num_index+1:
-                tail += segments.pop(max_num_index+1)
-            tail_segments = to_segment(tail, new_len)
-            del_ranks_border(tail_segments)  # Рассматриваем случай, когда последовательность столь длинная,
-                                             # что в ней встречается сразу несколько границ порядков, например:
-            segments.extend(tail_segments)   # "89101112...9899100101102" или даже "9899100101102...99899910001001"
-    except ValueError:
-        try:
-            min_num_index = segments.index(str(min_num_to_fill(len(segments[0]))))
-            # Ищем сегмент, младшее число в порядке
-            # Например, '10' или '10000' в зависимости от длины сегмента
-            if min_num_index != 0:
-                new_len = len(segments[0])-1
-                if new_len is 0:
-                    return
-                head = ''
-                if len(segments) is 2 and min_num_index is 1:
-                    head += segments.pop(0)
-                while len(segments) - min_num_index > 1:
-                    head += segments.pop(0)
-                if len(head) is 0:
-                    return
-                head_segments = to_segment(head, new_len)
-                shift = num_of_crosses(head_segments[-1])
-                head_segments = to_segment(head, new_len, shift)
-                del_ranks_border(head_segments)  # Как описано выше, мы проверим, вдруг есть ещё границы порядков
-                for segment in head_segments[::-1]:  # Вставляем в начало новую голову
-                    segments.insert(0, segment)
-        except ValueError:
-            ...  # Мне нравится свобода синтаксиса в третьем питоне
-
-
-def explore_segments(segments):
-    """
-    Исследует разбиение из сегмнтов на корректность.
-    Если разбиение некорректно, возвращает False,
-    иначе возвращает кортеж из полного первого сегмента
-    и длинны сдвига, на который этот сегмент отрезан
-    """
-    if len(segments) is 1 and segments[0][0] is not '0':
-        if segments[0][0] is 'x' or segments[0][-1] is 'x':
-            # Вообще-то такой сегмент корректен, но мы можем
-            # утверждать, что он не наименьший из возможных,
-            # кроме случаев вида 'x0000'
-            if segments[0][0] == 'x':
-                for digit in segments[0][1:]:
-                    if digit != '0':
-                        return False
-                return get_min_num(len(segments[0])), 1  # Сдвиг, в этом случае, всегда 1
-            return False                                 # т.к. 'x' в начале только один
-        return int(segments[0]), 0
-
-    del_ranks_border(segments)  # Уберём границы порядков
-
-    for segment in segments:
-        #  Ни одно число не начинается с нуля
-        if segment[0] is '0':
-            return False
-
-    shift = num_of_crosses(segments[0])  # Вычислим, сколько отрезано символов от начала
-                                         # первого числа, чтобы позже правильно сосчитать
-    if segments[0][0] is 'x':            # расстояние до первого вхождения
-        if len(segments) is 2:
-            if segments[1][-1] is not 'x':
-                # Если сегмента два, и второй это число
-                first_int = int(segments[1])-1
-                if are_equivalent(str(first_int), segments[0]):
-                    return first_int, shift
-                return False
-            else:
-                # Если сегмента два, и оба неполные. Самый сложный случай.
-                # Перебором подставляем цифры в тот сегмент, где пропусков меньше
-                if num_of_crosses(segments[0]) <= num_of_crosses(segments[1]):
-                    for i in range(min_num_to_fill(num_of_crosses(segments[0]), 'l'),
-                                   max_num_to_fill(num_of_crosses(segments[0]))):
-                        filled = int(fill_crosses(segments[0], str(i)))
-                        if are_equivalent(str(filled+1), segments[1]):
-                            return filled, shift
-                else:
-                    for i in range(min_num_to_fill(num_of_crosses(segments[1]), 'r'),
-                                   max_num_to_fill(num_of_crosses(segments[1]))):
-                        filled = int(fill_crosses(segments[1], str(i)))
-                        if are_equivalent(str(filled-1), segments[0]):
-                            return filled-1, shift
-                return False
-        else:
-            # Если сегментов больше двух, то сегменты в середине точно полные.
-            # Второй сегмент точно в середине. Возьмём его за точку отсчета.
-            first_int = int(segments[1])-1
-            for i in range(0, len(segments)):
-                if are_equivalent(str(first_int+i), segments[i]) is False:
-                    return False
-            return first_int, shift
-
-    # Сюда доходят только такие разбиения, в которых первый сегмент натуральное число
-    # Последовательно проверяем сегменты оставшегося хвоста
-    first_int = int(segments[0])
-    for i in range(1, len(segments)):
-        if are_equivalent(str(first_int+i), segments[i]) is False:
-            return False
-    return first_int, shift
-
-
-def split_seq(str_seq):
-    """
-    Перебирает возможные разбиения строки, пока не найдёт корректное
-    Если таковых находится несколько, выбирает то, расстояние до которого меньше
-    Возвращает кортеж из числа, которому соответствует первый сегмент корректного разбиения
-    и длинны сдвига, на который этот сегмент отрезан
-    """
-    nums = dict()
-    for segment_len in range(1, len(str_seq)+1+num_of_zero(str_seq)):
-        # Максимальная возможная длина сегмента в разбиении
-        # зависит не только от длины строки, но и от количества нулей
-        # в её начале. Например, '00' → ['100']
-        for shift in range(0, segment_len):
-            segments = to_segment(str_seq, segment_len, shift)
-            min_num = explore_segments(segments)
-            if min_num:
-                if min_num[0] in nums.keys():
-                    if min_num[1] < nums[min_num[0]]:
-                        nums[min_num[0]] = min_num[1]
-                else:
-                    nums[min_num[0]] = min_num[1]
-        if len(nums) > 0:
-            # Если для текущей длины разбиения уже найден ответ,
-            # поиск можно прекратить, дальнейшие корректные разбиения
-            # всё равно не будут наилучшими
-            best_num = min(nums.keys())
-            return best_num, nums[best_num]
-    return False
-
-
-def show_answer(str_seq):
-    """
-    Выводит ответ в человекочитаемом виде
-    """
-    result = split_seq(str_seq)
-    distance = find_distance(result[0])
-    answer = distance+result[1]+1
-    print('Ответ: {}'.format(answer))
-
-
-str_seq = input('Введите искомую последовательность: ')
-show_answer(str_seq)
+if __name__ == '__main__':
+    main()
