@@ -1,5 +1,5 @@
 import pytest
-from inf_sequence import get_answer
+from inf_sequence import get_best_split
 from utils import distanse_to_int
 
 
@@ -16,7 +16,7 @@ long_test_string = ''.join(map(str, range(1, 1500)))
 
 @pytest.mark.parametrize("sequence", test_sequences)
 def test_sequence_finder(sequence):
-    assert get_answer(sequence) == long_test_string.find(sequence)
+    assert get_best_split(sequence).distanse == long_test_string.find(sequence)
 
 
 @pytest.mark.parametrize("number", range(1, 150))

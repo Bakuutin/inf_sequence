@@ -6,7 +6,7 @@ from utils import distanse_to_int
 
 
 MAX_NUMBER_WIDTH = 10
-PAD = 'x'
+PAD = '#'
 logger = logging.getLogger('sequence')
 
 
@@ -123,6 +123,9 @@ class Split:
     def end(self):
         return self.size + self.start
 
+    def __len__(self):
+        return distanse_to_int(self.end) - distanse_to_int(self.start)
+
     @property
     def distanse(self):
         return distanse_to_int(self.start) + self.shift
@@ -150,12 +153,6 @@ def get_best_split(sequence):
     return min(splits, key=lambda s: s.start)
 
 
-def get_answer(sequence):
-    best_split = get_best_split(sequence)
-    logger.info(f'Best split: {best_split}')
-    return best_split.distanse
-
-
 def main():
     logging.basicConfig(level=logging.INFO)
 
@@ -168,7 +165,24 @@ def main():
         print(f'"{sequence}" is not decimal!', file=sys.stderr)
         sys.exit(1)
 
-    print(get_answer(sequence))
+    from colored import fg, attr
+    split = get_best_split(sequence)
+    painted = fg("yellow")
+    reset = attr('reset')
+    string_split = " ".join(map(str, range(split.start, split.end)))
+    right_shift = (
+        (len(split) - split.shift - len(sequence)) or -len(string_split)
+    )
+    before = f'{split.start - 1} ' if split.start != 1 else ''
+    after = split.end
+    colored_string_split = (
+        f'{before}'
+        f'{string_split[:split.shift]}{painted}'
+        f'{string_split[split.shift:-right_shift]}{reset}'
+        f'{string_split[-right_shift:]} '
+        f'{after}'
+    )
+    print(colored_string_split)
 
 
 if __name__ == '__main__':
