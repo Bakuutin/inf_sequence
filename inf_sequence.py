@@ -160,7 +160,7 @@ def get_best_split(sequence):
 
 
 def main():
-    logging.basicConfig(level=logging.INFO)
+    # logging.basicConfig(level=logging.INFO)
 
     if len(sys.argv) < 2:
         sequence = input('Enter a sequence: ')
