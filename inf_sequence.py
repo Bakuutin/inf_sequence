@@ -5,12 +5,16 @@ import logging
 from utils import distanse_to_int
 
 
-MAX_NUMBER_WIDTH = 10
+MAX_NUMBER_WIDTH = 15
 PAD = '#'
 logger = logging.getLogger('sequence')
 
 
 class InvalidSequence(Exception):
+    pass
+
+
+class TooFarAway(Exception):
     pass
 
 
@@ -150,6 +154,8 @@ def get_best_splits(sequence):
 
 def get_best_split(sequence):
     splits = get_best_splits(sequence)
+    if not splits:
+        raise TooFarAway
     return min(splits, key=lambda s: s.start)
 
 
@@ -166,7 +172,12 @@ def main():
         sys.exit(1)
 
     from colored import fg, attr
-    split = get_best_split(sequence)
+    try:
+        split = get_best_split(sequence)
+    except TooFarAway:
+        print(f'"{sequence}" is too far away :(', file=sys.stderr)
+        sys.exit(1)
+
     painted = fg("yellow")
     reset = attr('reset')
     string_split = " ".join(map(str, range(split.start, split.end)))
